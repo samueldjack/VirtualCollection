@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="85add18f-80e9-4c8b-b3b9-d3bee3121464" xmlns="urn:schemas-microsoft-com:xml-dataservicemap">
+  <MetadataSources>
+    <MetadataSource Address="http://odata.netflix.com/Catalog" Protocol="http" SourceId="1" />
+  </MetadataSources>
+  <Metadata>
+    <MetadataFile FileName="service.edmx" MetadataType="Edmx" ID="901021ad-6e16-469f-b39d-be5d9f840aa1" SourceId="1" SourceUrl="http://odata.netflix.com/Catalog" />
+  </Metadata>
+  <Extensions />
+  <Parameters>
+    <Parameter Name="ClientAssemblyReference" Value="C:\Program Files (x86)\Microsoft WCF Data Services\5.0\bin\Silverlight\Microsoft.Data.Services.Client.SL.dll" />
+    <Parameter Name="SpatialAssemblyReference" Value="C:\Program Files (x86)\Microsoft WCF Data Services\5.0\bin\Silverlight\System.Spatial.SL.dll" />
+    <Parameter Name="ODataLibraryAssemblyReference" Value="C:\Program Files (x86)\Microsoft WCF Data Services\5.0\bin\Silverlight\Microsoft.Data.OData.SL.dll" />
+    <Parameter Name="UseDataServiceCollection" Value="true" />
+    <Parameter Name="Version" Value="3.0" />
+  </Parameters>
+</ReferenceGroup>

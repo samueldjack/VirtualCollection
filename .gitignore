@@ -1,0 +1,5 @@
+_ReSharper*
+VirtualCollection/Bin/
+*.user
+VirtualCollection/obj/
+*.suo
