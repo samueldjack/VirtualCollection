@@ -42,7 +42,7 @@ namespace VirtualCollection.Demo
         public MainViewModel()
         {
             _source = new NetflixTitleSource();
-            Items = new VirtualCollection<Title>(_source, 25, 25);
+            Items = new VirtualCollection<Title>(_source, 20, 5);
         }
 
         protected override void OnViewLoaded()

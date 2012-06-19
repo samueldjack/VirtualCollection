@@ -10,6 +10,9 @@
              xmlns:sdk="http://schemas.microsoft.com/winfx/2006/xaml/presentation/sdk"
              xmlns:VirtualCollection1="clr-namespace:VirtualCollection.VirtualCollection" mc:Ignorable="d"
     d:DesignHeight="300" d:DesignWidth="400">
+    <UserControl.Resources>
+        <Demo:StringToImageConverter x:Key="Converter_StringToImage"/>
+    </UserControl.Resources>
     <UserControl.DataContext>
         <Demo:MainViewModel/>
     </UserControl.DataContext>
@@ -38,11 +41,7 @@
                 <sdk:DataGridTemplateColumn Header="Image">
                     <sdk:DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Image Width="100">
-                              <Image.Source>
-                                    <BitmapImage UriSource="{Binding Item.BoxArt.SmallUrl}"/>
-                              </Image.Source>
-                            </Image>
+                            <Image Stretch="None" Source="{Binding Item.BoxArt.SmallUrl, Converter={StaticResource Converter_StringToImage}}" Margin="5" />
                         </DataTemplate>
                     </sdk:DataGridTemplateColumn.CellTemplate>
                 </sdk:DataGridTemplateColumn>

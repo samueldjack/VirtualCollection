@@ -57,7 +57,11 @@ namespace VirtualCollection.Demo
 
             if (!string.IsNullOrEmpty(Search))
             {
-                query = query.AddQueryOption("$filter", "substringof('" + Search + "',Name) eq true");
+                query = query.AddQueryOption("$filter", "(substringof('" + Search + "',Name) eq true) and (BoxArt/SmallUrl ne null)");
+            }
+            else
+            {
+                query = query.AddQueryOption("$filter", "(BoxArt/SmallUrl ne null)");
             }
 
             if (orderByString.Length > 0)

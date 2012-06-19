@@ -3,3 +3,6 @@ VirtualCollection/Bin/
 *.user
 VirtualCollection/obj/
 *.suo
+[Bb]in
+[Oo]bj
+ClientBin

@@ -94,6 +94,7 @@
     <Compile Include="Demo\NetflixTitleSource.cs" />
     <Compile Include="Demo\MainViewModel.cs" />
     <Compile Include="Demo\Schedulers.cs" />
+    <Compile Include="Demo\StringToImageConverter.cs" />
     <Compile Include="Framework\Behaviors\NotifyViewModelOfLifeCycleEvents.cs" />
     <Compile Include="Framework\Extensions\SymbolExtensions.cs" />
     <Compile Include="Framework\MVVM\ActionCommand.cs" />
