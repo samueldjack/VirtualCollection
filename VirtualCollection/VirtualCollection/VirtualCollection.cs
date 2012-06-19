@@ -38,7 +38,7 @@ namespace VirtualCollection.VirtualCollection
         private readonly HashSet<int> _fetchedPages = new HashSet<int>();
         private readonly HashSet<int> _requestedPages = new HashSet<int>();
 
-        private readonly MostRecentUsedList<int> _mostRecentlyRequestedPages; 
+        private readonly MostRecentUsedList<int> _mostRecentlyRequestedPages;
         private int _itemCount;
         private readonly TaskScheduler _synchronizationContextScheduler;
         private bool _isRefreshDeferred;
@@ -46,13 +46,14 @@ namespace VirtualCollection.VirtualCollection
 
         private int _inProcessPageRequests;
         private Stack<PageRequest> _pendingPageRequests = new Stack<PageRequest>();
- 
+
         private readonly SortDescriptionCollection _sortDescriptions = new SortDescriptionCollection();
 
-        public VirtualCollection(IVirtualCollectionSource<T> source, int pageSize, int cachedPages) : this(source, pageSize, cachedPages, EqualityComparer<T>.Default)
+        public VirtualCollection(IVirtualCollectionSource<T> source, int pageSize, int cachedPages)
+            : this(source, pageSize, cachedPages, EqualityComparer<T>.Default)
         {
-            
-        } 
+
+        }
 
         public VirtualCollection(IVirtualCollectionSource<T> source, int pageSize, int cachedPages, IEqualityComparer<T> equalityComparer)
         {
@@ -282,7 +283,7 @@ namespace VirtualCollection.VirtualCollection
             while (_inProcessPageRequests < MaxConcurrentPageRequests && _pendingPageRequests.Count > 0)
             {
                 var request = _pendingPageRequests.Pop();
-                
+
                 // if we encounter a requested posted for an early collection state,
                 // we can ignore it, and all that came before it
                 if (_state != request.StateWhenRequested)
@@ -300,22 +301,22 @@ namespace VirtualCollection.VirtualCollection
 
                 _inProcessPageRequests++;
 
-                _source.GetPageAsync(request.Page*_pageSize, _pageSize, _sortDescriptions).ContinueWith(
+                _source.GetPageAsync(request.Page * _pageSize, _pageSize, _sortDescriptions).ContinueWith(
                     t =>
+                    {
+                        if (!t.IsFaulted)
                         {
-                            if (!t.IsFaulted)
-                            {
-                                UpdatePage(request.Page, t.Result, request.StateWhenRequested);
-                            }
-                            else
-                            {
-                                InvalidatePage(request.Page, request.StateWhenRequested);
-                            }
+                            UpdatePage(request.Page, t.Result, request.StateWhenRequested);
+                        }
+                        else
+                        {
+                            InvalidatePage(request.Page, request.StateWhenRequested);
+                        }
 
-                            // fire off any further requests
-                            _inProcessPageRequests--;
-                            ProcessPageRequests();
-                        },
+                        // fire off any further requests
+                        _inProcessPageRequests--;
+                        ProcessPageRequests();
+                    },
                     _synchronizationContextScheduler);
             }
         }
@@ -359,7 +360,7 @@ namespace VirtualCollection.VirtualCollection
                 return;
             }
 
-            bool stillRelevant = _requestedPages.Remove(page); 
+            bool stillRelevant = _requestedPages.Remove(page);
             if (!stillRelevant)
             {
                 return;
@@ -406,8 +407,8 @@ namespace VirtualCollection.VirtualCollection
 
             if (queryItemVisibilityArgs.FirstVisibleIndex.HasValue)
             {
-                var firstVisiblePage = queryItemVisibilityArgs.FirstVisibleIndex.Value/_pageSize;
-                var lastVisiblePage = queryItemVisibilityArgs.LastVisibleIndex.Value/_pageSize;
+                var firstVisiblePage = queryItemVisibilityArgs.FirstVisibleIndex.Value / _pageSize;
+                var lastVisiblePage = queryItemVisibilityArgs.LastVisibleIndex.Value / _pageSize;
 
                 int numberOfVisiblePages = lastVisiblePage - firstVisiblePage + 1;
                 EnsurePageCacheSize(numberOfVisiblePages);
@@ -495,11 +496,11 @@ namespace VirtualCollection.VirtualCollection
             }
             else if (delta < 0)
             {
-                for (int i = delta; i < 0; i++)
+                for (int i = 1; i <= Math.Abs(delta); i++)
                 {
                     OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove,
-                                                                             _virtualItems[originalItemCount + i],
-                                                                             originalItemCount + i));
+                                                                             _virtualItems[originalItemCount - i],
+                                                                             originalItemCount - i));
                 }
             }
         }
