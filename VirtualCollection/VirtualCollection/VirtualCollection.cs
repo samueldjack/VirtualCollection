@@ -19,6 +19,7 @@ namespace VirtualCollection.VirtualCollection
     public class VirtualCollection<T> : IList<VirtualItem<T>>, IList, ICollectionView, INotifyPropertyChanged, IEnquireAboutItemVisibility where T : class
     {
         const int IndividualItemNotificationLimit = 100;
+        private const int MaxConcurrentPageRequests = 4;
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
@@ -43,6 +44,9 @@ namespace VirtualCollection.VirtualCollection
         private bool _isRefreshDeferred;
         private int _currentItem;
 
+        private int _inProcessPageRequests;
+        private Stack<PageRequest> _pendingPageRequests = new Stack<PageRequest>();
+ 
         private readonly SortDescriptionCollection _sortDescriptions = new SortDescriptionCollection();
 
         public VirtualCollection(IVirtualCollectionSource<T> source, int pageSize, int cachedPages) : this(source, pageSize, cachedPages, EqualityComparer<T>.Default)
@@ -263,21 +267,57 @@ namespace VirtualCollection.VirtualCollection
 
             _requestedPages.Add(page);
 
-            var stateWhenRequestInitiated = _state;
+            ScheduleRequest(page);
+        }
 
-            _source.GetPageAsync(page*_pageSize, _pageSize, _sortDescriptions).ContinueWith(
-                t =>
-                    {
-                        if (!t.IsFaulted)
+        private void ScheduleRequest(int page)
+        {
+            _pendingPageRequests.Push(new PageRequest(page, _state));
+
+            ProcessPageRequests();
+        }
+
+        private void ProcessPageRequests()
+        {
+            while (_inProcessPageRequests < MaxConcurrentPageRequests && _pendingPageRequests.Count > 0)
+            {
+                var request = _pendingPageRequests.Pop();
+                
+                // if we encounter a requested posted for an early collection state,
+                // we can ignore it, and all that came before it
+                if (_state != request.StateWhenRequested)
+                {
+                    _pendingPageRequests.Clear();
+                    break;
+                }
+
+                // check that the page is still requested (the user might have scrolled, causing the 
+                // page to be ejected from the cache
+                if (!_requestedPages.Contains(request.Page))
+                {
+                    break;
+                }
+
+                _inProcessPageRequests++;
+
+                _source.GetPageAsync(request.Page*_pageSize, _pageSize, _sortDescriptions).ContinueWith(
+                    t =>
                         {
-                            UpdatePage(page, t.Result, stateWhenRequestInitiated);
-                        }
-                        else
-                        {
-                            InvalidatePage(page, stateWhenRequestInitiated);
-                        }
-                    },
-                _synchronizationContextScheduler);
+                            if (!t.IsFaulted)
+                            {
+                                UpdatePage(request.Page, t.Result, request.StateWhenRequested);
+                            }
+                            else
+                            {
+                                InvalidatePage(request.Page, request.StateWhenRequested);
+                            }
+
+                            // fire off any further requests
+                            _inProcessPageRequests--;
+                            ProcessPageRequests();
+                        },
+                    _synchronizationContextScheduler);
+            }
         }
 
         private void InvalidatePage(int page, uint stateWhenRequestInitiated)
@@ -676,6 +716,18 @@ namespace VirtualCollection.VirtualCollection
         public void RemoveAt(int index)
         {
             throw new NotImplementedException();
+        }
+
+        private struct PageRequest
+        {
+            public readonly int Page;
+            public readonly uint StateWhenRequested;
+
+            public PageRequest(int page, uint state)
+            {
+                Page = page;
+                StateWhenRequested = state;
+            }
         }
     }
 }
