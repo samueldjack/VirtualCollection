@@ -8,11 +8,66 @@
              xmlns:Demo="clr-namespace:VirtualCollection.Demo"
              xmlns:VirtualCollection="clr-namespace:VirtualCollection"
              xmlns:sdk="http://schemas.microsoft.com/winfx/2006/xaml/presentation/sdk"
-             xmlns:VirtualCollection1="clr-namespace:VirtualCollection.VirtualCollection" mc:Ignorable="d"
+             xmlns:VirtualCollection1="clr-namespace:VirtualCollection.VirtualCollection"
+             xmlns:Converters="clr-namespace:VirtualCollection.Framework.Converters" mc:Ignorable="d"
     d:DesignHeight="300" d:DesignWidth="400">
     <UserControl.Resources>
         <Demo:StringToImageConverter x:Key="Converter_StringToImage"/>
+
+        <DataTemplate x:Key="DataTemplate_List_CardView">
+            <ListBox x:Name="DocumentsList"
+						ItemsSource="{Binding Items}">
+
+              <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="RosyBrown" BorderThickness="1" Margin="20" Height="180" Width="120" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Image Stretch="None" Source="{Binding Item.BoxArt.LargeUrl, Converter={StaticResource Converter_StringToImage}}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+              <i:Interaction.Behaviors>
+                    <VirtualCollection1:ProvideVisibleItemRangeFromItemsControlBehavior/>
+                </i:Interaction.Behaviors>
+
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualCollection1:VirtualizingWrapPanel ItemWidth="200"
+                                                         ItemHeight="230"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+        </DataTemplate>
+
+        <DataTemplate x:Key="DataTemplate_List_DetailsView">
+            <sdk:DataGrid ItemsSource="{Binding Items}" Grid.Row="1" Margin="10,0" IsReadOnly="True" AutoGenerateColumns="False" RowHeight="50">
+                <i:Interaction.Behaviors>
+                    <VirtualCollection1:ProvideVisibleItemRangeFromDataGridBehavior/>
+                </i:Interaction.Behaviors>
+
+                <sdk:DataGrid.Columns>
+                    <sdk:DataGridTemplateColumn Header="Image">
+                        <sdk:DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Image Stretch="None" Source="{Binding Item.BoxArt.SmallUrl, Converter={StaticResource Converter_StringToImage}}" Margin="5" />
+                            </DataTemplate>
+                        </sdk:DataGridTemplateColumn.CellTemplate>
+                    </sdk:DataGridTemplateColumn>
+                    <sdk:DataGridTextColumn Binding="{Binding Item.Name}" Header="Name" CanUserSort="True" SortMemberPath="Name"/>
+                    <sdk:DataGridTextColumn Binding="{Binding Item.AverageRating}" Header="Average Rating" CanUserSort="True" SortMemberPath="AverageRating"/>
+                    <sdk:DataGridTextColumn Binding="{Binding Item.ReleaseYear}" Header="Release Year" CanUserSort="True" SortMemberPath="ReleaseYear"/>
+                </sdk:DataGrid.Columns>
+            </sdk:DataGrid>
+        </DataTemplate>
+
+        <Converters:StringValueToObjectConverter x:Key="Converter_DisplayStyleToTemplate">
+            <Converters:StringValueToObjectConverter.Conversions>
+                <Converters:StringValueConversion When="Card" Then="{StaticResource DataTemplate_List_CardView}"/>
+                <Converters:StringValueConversion When="Details" Then="{StaticResource DataTemplate_List_DetailsView}"/>
+            </Converters:StringValueToObjectConverter.Conversions>
+        </Converters:StringValueToObjectConverter>
+        
     </UserControl.Resources>
+    
     <UserControl.DataContext>
         <Demo:MainViewModel/>
     </UserControl.DataContext>
@@ -32,24 +87,17 @@
             <TextBox Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" 
                      VerticalAlignment="Center"
                      Margin="5,0,0,0"/>
+            <TextBlock Text="Display Style:" Margin="15,0,0,0" VerticalAlignment="Center"/>
+            <ComboBox ItemsSource="{Binding DisplayStyles}" SelectedItem="{Binding DisplayStyle, Mode=TwoWay}" Margin="5,0,0,0" Width="100" VerticalAlignment="Center"/>
         </StackPanel>
-        <sdk:DataGrid ItemsSource="{Binding Items}" Grid.Row="1" Margin="10,0" IsReadOnly="True" AutoGenerateColumns="False" RowHeight="50">
-            <i:Interaction.Behaviors>
-                <VirtualCollection1:ProvideVisibleItemRangeFromDataGridBehavior />
-            </i:Interaction.Behaviors>
-            <sdk:DataGrid.Columns>
-                <sdk:DataGridTemplateColumn Header="Image">
-                    <sdk:DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Image Stretch="None" Source="{Binding Item.BoxArt.SmallUrl, Converter={StaticResource Converter_StringToImage}}" Margin="5" />
-                        </DataTemplate>
-                    </sdk:DataGridTemplateColumn.CellTemplate>
-                </sdk:DataGridTemplateColumn>
-                <sdk:DataGridTextColumn Binding="{Binding Item.Name}" Header="Name" CanUserSort="True" SortMemberPath="Name"/>
-                <sdk:DataGridTextColumn Binding="{Binding Item.AverageRating}" Header="Average Rating" CanUserSort="True" SortMemberPath="AverageRating"/>
-                <sdk:DataGridTextColumn Binding="{Binding Item.ReleaseYear}" Header="Release Year" CanUserSort="True" SortMemberPath="ReleaseYear"/>
-            </sdk:DataGrid.Columns>
-        </sdk:DataGrid>
+            
+        <ContentControl 
+            Grid.Row="1"
+            Content="{Binding}" 
+                            ContentTemplate="{Binding Path=DisplayStyle, Converter={StaticResource Converter_DisplayStyleToTemplate}}"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch" Margin="0,0,0,4"/>
+            
         <VirtualCollection:BusynessIndicator BusyBody="{Binding Items.Source}" Grid.Row="2" Margin="10,0,10,20"/>
     </Grid>
 </UserControl>

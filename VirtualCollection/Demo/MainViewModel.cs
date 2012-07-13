@@ -15,6 +15,8 @@ using System.Windows.Shapes;
 using VirtualCollection.Framework.MVVM;
 using VirtualCollection.Netflix;
 using VirtualCollection.VirtualCollection;
+using VirtualCollection.Framework.Extensions;
+using System.Reactive.Linq;
 
 namespace VirtualCollection.Demo
 {
@@ -22,6 +24,7 @@ namespace VirtualCollection.Demo
     {
         private string _search;
         private NetflixTitleSource _source;
+        private string _displayStyle;
 
         public string Search
         {
@@ -29,13 +32,22 @@ namespace VirtualCollection.Demo
             set
             {
                 _search = value;
-                _source.Search = value;
                 RaisePropertyChanged(() => Search);
             }
         }
 
-        public int count;
+        public string DisplayStyle
+        {
+            get { return _displayStyle; }
+            set
+            {
+                _displayStyle = value;
+                RaisePropertyChanged(() => DisplayStyle);
+            }
+        }
 
+        public IList<string> DisplayStyles { get { return new[] {"Card", "Details"}; } }
+ 
         public VirtualCollection<Title> Items { get; private set; }
 
 
@@ -43,6 +55,13 @@ namespace VirtualCollection.Demo
         {
             _source = new NetflixTitleSource();
             Items = new VirtualCollection<Title>(_source, 20, 5);
+
+            this.ObservePropertyChanged(() => Search)
+                .Throttle(TimeSpan.FromSeconds(0.25))
+                .ObserveOnDispatcher()
+                .Subscribe(_ => _source.Search = Search);
+
+            DisplayStyle = "Details";
         }
 
         protected override void OnViewLoaded()

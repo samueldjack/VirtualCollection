@@ -31,6 +31,8 @@
     <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
     <LinkedServerProject>
     </LinkedServerProject>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <!-- This property group is only here to support building this project using the 
        MSBuild 3.5 toolset. In order to work correctly with this older toolset, it needs 
@@ -67,6 +69,12 @@
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Microsoft WCF Data Services\5.0\bin\Silverlight\Microsoft.Data.Services.Client.SL.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
+    <Reference Include="System.Reactive">
+      <HintPath>..\packages\Rx-Main.1.0.11226\lib\SL5\System.Reactive.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reactive.Windows.Threading">
+      <HintPath>..\packages\Rx-Silverlight.1.0.11226\lib\SL5\System.Reactive.Windows.Threading.dll</HintPath>
+    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Spatial.SL">
@@ -96,6 +104,10 @@
     <Compile Include="Demo\Schedulers.cs" />
     <Compile Include="Demo\StringToImageConverter.cs" />
     <Compile Include="Framework\Behaviors\NotifyViewModelOfLifeCycleEvents.cs" />
+    <Compile Include="Framework\Converters\StringValueConversion.cs" />
+    <Compile Include="Framework\Converters\StringValueConversionCollection.cs" />
+    <Compile Include="Framework\Converters\StringValueToObjectConverter.cs" />
+    <Compile Include="Framework\Extensions\INotifyPropertyChangedExtensions.cs" />
     <Compile Include="Framework\Extensions\SymbolExtensions.cs" />
     <Compile Include="Framework\MVVM\ActionCommand.cs" />
     <Compile Include="Framework\MVVM\CommandBase.cs" />
@@ -143,6 +155,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="Properties\AppManifest.xml" />
     <None Include="Service References\Netflix\service.edmx" />
   </ItemGroup>
@@ -175,4 +188,5 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
+  <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
 </Project>
