@@ -310,7 +310,7 @@ namespace VirtualCollection.VirtualCollection
                         }
                         else
                         {
-                            InvalidatePage(request.Page, request.StateWhenRequested);
+                            MarkPageAsError(request.Page, request.StateWhenRequested);
                         }
 
                         // fire off any further requests
@@ -321,7 +321,7 @@ namespace VirtualCollection.VirtualCollection
             }
         }
 
-        private void InvalidatePage(int page, uint stateWhenRequestInitiated)
+        private void MarkPageAsError(int page, uint stateWhenRequestInitiated)
         {
             if (stateWhenRequestInitiated != _state)
             {
@@ -342,7 +342,7 @@ namespace VirtualCollection.VirtualCollection
                 var virtualItem = _virtualItems[index];
                 if (virtualItem != null)
                 {
-                    virtualItem.Item = null;
+                    virtualItem.ErrorFetchingValue();
                 }
             }
         }
@@ -376,7 +376,7 @@ namespace VirtualCollection.VirtualCollection
                 var virtualItem = _virtualItems[index] ?? (_virtualItems[index] = new VirtualItem<T>(this, index));
                 if (virtualItem.Item == null || results[i] == null || !_equalityComparer.Equals(virtualItem.Item, results[i]))
                 {
-                    virtualItem.Item = results[i];
+                    virtualItem.SupplyValue(results[i]);
                 }
             }
 
@@ -450,7 +450,7 @@ namespace VirtualCollection.VirtualCollection
                 {
                     if (_virtualItems[i] != null)
                     {
-                        _virtualItems[i].Item = null;
+                        _virtualItems[i].ClearValue();
                     }
                 }
             }
@@ -482,7 +482,7 @@ namespace VirtualCollection.VirtualCollection
 
             OnPropertyChanged(new PropertyChangedEventArgs("Count"));
 
-            if (Math.Abs(delta) > IndividualItemNotificationLimit)
+            if (Math.Abs(delta) > IndividualItemNotificationLimit || _itemCount == 0)
             {
                 OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             }
