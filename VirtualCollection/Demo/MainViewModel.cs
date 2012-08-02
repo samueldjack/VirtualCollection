@@ -23,7 +23,7 @@ namespace VirtualCollection.Demo
     public class MainViewModel : ViewModel
     {
         private string _search;
-        private NetflixTitleSource _source;
+        private NetflixTitlesSource _source;
         private string _displayStyle;
 
         public string Search
@@ -50,11 +50,10 @@ namespace VirtualCollection.Demo
  
         public VirtualCollection<Title> Items { get; private set; }
 
-
         public MainViewModel()
         {
-            _source = new NetflixTitleSource();
-            Items = new VirtualCollection<Title>(_source, 20, 5);
+            _source = new NetflixTitlesSource();
+            Items = new VirtualCollection<Title>(_source, pageSize: 20, cachedPages: 5);
 
             this.ObservePropertyChanged(() => Search)
                 .Throttle(TimeSpan.FromSeconds(0.25))
@@ -66,8 +65,6 @@ namespace VirtualCollection.Demo
 
         protected override void OnViewLoaded()
         {
-            base.OnViewLoaded();
-
             Items.Refresh();
         }
     }

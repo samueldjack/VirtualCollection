@@ -21,7 +21,10 @@
               <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border BorderBrush="RosyBrown" BorderThickness="1" Margin="20" Height="180" Width="120" VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <Image Stretch="None" Source="{Binding Item.BoxArt.LargeUrl, Converter={StaticResource Converter_StringToImage}}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            <Grid>
+                                <TextBlock Foreground="Gray" Text="{Binding Item.Name}" TextWrapping="Wrap" Margin="5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                <Image Stretch="None" Source="{Binding Item.BoxArt.LargeUrl, Converter={StaticResource Converter_StringToImage}}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </Grid>
                         </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -43,7 +46,6 @@
                 <i:Interaction.Behaviors>
                     <VirtualCollection1:ProvideVisibleItemRangeFromDataGridBehavior/>
                 </i:Interaction.Behaviors>
-
                 <sdk:DataGrid.Columns>
                     <sdk:DataGridTemplateColumn Header="Image">
                         <sdk:DataGridTemplateColumn.CellTemplate>
