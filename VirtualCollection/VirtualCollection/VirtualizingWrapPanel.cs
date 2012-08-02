@@ -27,17 +27,7 @@ namespace VirtualCollection.VirtualCollection
             DependencyProperty.RegisterAttached("VirtualItemIndex", typeof(int), typeof(VirtualizingWrapPanel), new PropertyMetadata(-1));
         private IRecyclingItemContainerGenerator _itemsGenerator;
 
-        public static readonly DependencyProperty DeferScrollingProperty =
-            DependencyProperty.Register("DeferScrolling", typeof(bool), typeof(VirtualizingWrapPanel), new PropertyMetadata(default(bool)));
-
-        private DeferredActionInvoker _deferredMeasureInvalidation;
         private bool _isInMeasure;
-
-        public bool DeferScrolling
-        {
-            get { return (bool)GetValue(DeferScrollingProperty); }
-            set { SetValue(DeferScrollingProperty, value); }
-        }
 
         private static int GetVirtualItemIndex(DependencyObject obj)
         {
@@ -67,9 +57,6 @@ namespace VirtualCollection.VirtualCollection
             {
                 Dispatcher.BeginInvoke(Initialize);
             }
-
-            _deferredMeasureInvalidation = new DeferredActionInvoker(InvalidateMeasure,
-                                                                     TimeSpan.FromSeconds(0.05));
         }
 
         private void Initialize()
@@ -94,7 +81,6 @@ namespace VirtualCollection.VirtualCollection
                 return availableSize;
             }
 
-            _deferredMeasureInvalidation.Cancel();
             _isInMeasure = true;
             _childLayouts.Clear();
 
@@ -379,15 +365,7 @@ namespace VirtualCollection.VirtualCollection
             _offset = new Point(_offset.X, offset);
 
             InvalidateScrollInfo();
-
-            if (DeferScrolling)
-            {
-                _deferredMeasureInvalidation.Request();
-            }
-            else
-            {
-                InvalidateMeasure();
-            }
+            InvalidateMeasure();
         }
 
         public Rect MakeVisible(UIElement visual, Rect rectangle)
