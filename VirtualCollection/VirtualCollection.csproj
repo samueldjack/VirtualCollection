@@ -99,7 +99,7 @@
     <Compile Include="BusynessIndicator.xaml.cs">
       <DependentUpon>BusynessIndicator.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Demo\NetflixTitleSource.cs" />
+    <Compile Include="Demo\NetflixTitlesSource.cs" />
     <Compile Include="Demo\MainViewModel.cs" />
     <Compile Include="Demo\Schedulers.cs" />
     <Compile Include="Demo\StringToImageConverter.cs" />
@@ -123,6 +123,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Reference.datasvcmap</DependentUpon>
     </Compile>
+    <Compile Include="VirtualCollection\DeferredActionInvoker.cs" />
     <Compile Include="VirtualCollection\Disposer.cs" />
     <Compile Include="VirtualCollection\IEnquireAboutItemVisibility.cs" />
     <Compile Include="VirtualCollection\INotifyBusyness.cs" />

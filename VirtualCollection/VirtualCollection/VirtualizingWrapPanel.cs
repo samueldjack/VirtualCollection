@@ -16,9 +16,9 @@ namespace VirtualCollection.VirtualCollection
         private Point _offset;
         private ItemsControl _itemsControl;
         private readonly Dictionary<UIElement, Rect> _childLayouts = new Dictionary<UIElement, Rect>();
- 
+
         public static readonly DependencyProperty ItemWidthProperty =
-            DependencyProperty.Register("ItemWidth", typeof (double), typeof (VirtualizingWrapPanel), new PropertyMetadata(1.0, HandleItemDimensionChanged));
+            DependencyProperty.Register("ItemWidth", typeof(double), typeof(VirtualizingWrapPanel), new PropertyMetadata(1.0, HandleItemDimensionChanged));
 
         public static readonly DependencyProperty ItemHeightProperty =
             DependencyProperty.Register("ItemHeight", typeof(double), typeof(VirtualizingWrapPanel), new PropertyMetadata(1.0, HandleItemDimensionChanged));
@@ -27,7 +27,17 @@ namespace VirtualCollection.VirtualCollection
             DependencyProperty.RegisterAttached("VirtualItemIndex", typeof(int), typeof(VirtualizingWrapPanel), new PropertyMetadata(-1));
         private IRecyclingItemContainerGenerator _itemsGenerator;
 
+        public static readonly DependencyProperty DeferScrollingProperty =
+            DependencyProperty.Register("DeferScrolling", typeof(bool), typeof(VirtualizingWrapPanel), new PropertyMetadata(default(bool)));
+
+        private DeferredActionInvoker _deferredMeasureInvalidation;
         private bool _isInMeasure;
+
+        public bool DeferScrolling
+        {
+            get { return (bool)GetValue(DeferScrollingProperty); }
+            set { SetValue(DeferScrollingProperty, value); }
+        }
 
         private static int GetVirtualItemIndex(DependencyObject obj)
         {
@@ -41,13 +51,13 @@ namespace VirtualCollection.VirtualCollection
 
         public double ItemHeight
         {
-            get { return (double) GetValue(ItemHeightProperty); }
+            get { return (double)GetValue(ItemHeightProperty); }
             set { SetValue(ItemHeightProperty, value); }
         }
 
         public double ItemWidth
         {
-            get { return (double) GetValue(ItemWidthProperty); }
+            get { return (double)GetValue(ItemWidthProperty); }
             set { SetValue(ItemWidthProperty, value); }
         }
 
@@ -57,12 +67,15 @@ namespace VirtualCollection.VirtualCollection
             {
                 Dispatcher.BeginInvoke(Initialize);
             }
+
+            _deferredMeasureInvalidation = new DeferredActionInvoker(InvalidateMeasure,
+                                                                     TimeSpan.FromSeconds(0.05));
         }
 
         private void Initialize()
         {
             _itemsControl = ItemsControl.GetItemsOwner(this);
-            _itemsGenerator = (IRecyclingItemContainerGenerator) ItemContainerGenerator;
+            _itemsGenerator = (IRecyclingItemContainerGenerator)ItemContainerGenerator;
 
             InvalidateMeasure();
         }
@@ -81,6 +94,7 @@ namespace VirtualCollection.VirtualCollection
                 return availableSize;
             }
 
+            _deferredMeasureInvalidation.Cancel();
             _isInMeasure = true;
             _childLayouts.Clear();
 
@@ -180,7 +194,7 @@ namespace VirtualCollection.VirtualCollection
             foreach (var child in Children)
             {
                 var virtualItemIndex = GetVirtualItemIndex(child);
-                
+
                 if (virtualItemIndex < layoutInfo.FirstRealizedItemIndex || virtualItemIndex > layoutInfo.LastRealizedItemIndex)
                 {
                     var generatorPosition = _itemsGenerator.GeneratorPositionFromIndex(virtualItemIndex);
@@ -269,15 +283,15 @@ namespace VirtualCollection.VirtualCollection
 
             var itemsPerLine = Math.Max((int)Math.Floor(viewPortSize.Width / ItemWidth), 1);
             var totalLines = (int)Math.Ceiling((double)_itemsControl.Items.Count / itemsPerLine);
-            var extentHeight = Math.Max(totalLines*ItemHeight, viewPortSize.Height);
+            var extentHeight = Math.Max(totalLines * ItemHeight, viewPortSize.Height);
 
             return new ExtentInfo()
-                       {
-                           ItemsPerLine = itemsPerLine,
-                           TotalLines = totalLines,
-                           ExtentHeight = extentHeight,
-                           MaxVerticalOffset = extentHeight - viewPortSize.Height,
-                       };
+            {
+                ItemsPerLine = itemsPerLine,
+                TotalLines = totalLines,
+                ExtentHeight = extentHeight,
+                MaxVerticalOffset = extentHeight - viewPortSize.Height,
+            };
         }
 
         public void LineUp()
@@ -366,7 +380,14 @@ namespace VirtualCollection.VirtualCollection
 
             InvalidateScrollInfo();
 
-            InvalidateMeasure();
+            if (DeferScrolling)
+            {
+                _deferredMeasureInvalidation.Request();
+            }
+            else
+            {
+                InvalidateMeasure();
+            }
         }
 
         public Rect MakeVisible(UIElement visual, Rect rectangle)
@@ -381,19 +402,21 @@ namespace VirtualCollection.VirtualCollection
 
         public bool CanVerticallyScroll
         {
-            get; set;
+            get;
+            set;
         }
 
         public bool CanHorizontallyScroll
         {
-            get; set;
+            get;
+            set;
         }
-        
+
         public double ExtentWidth
         {
             get { return _extentSize.Width; }
         }
-        
+
         public double ExtentHeight
         {
             get { return _extentSize.Height; }
@@ -421,7 +444,8 @@ namespace VirtualCollection.VirtualCollection
 
         public ScrollViewer ScrollOwner
         {
-            get; set;
+            get;
+            set;
         }
 
         private void InvalidateScrollInfo()

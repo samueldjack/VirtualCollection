@@ -265,14 +265,8 @@ namespace VirtualCollection.VirtualCollection
             }
 
             _mostRecentlyRequestedPages.Add(page);
-
             _requestedPages.Add(page);
 
-            ScheduleRequest(page);
-        }
-
-        private void ScheduleRequest(int page)
-        {
             _pendingPageRequests.Push(new PageRequest(page, _state));
 
             ProcessPageRequests();
@@ -420,8 +414,8 @@ namespace VirtualCollection.VirtualCollection
             }
             else
             {
-                // in this case we have no way of knowing which items are currenly visible,
-                // so we signal a collection reset, and wait to see which pages are requested
+                // in this case we have no way of knowing which items are currently visible,
+                // so we signal a collection reset, and wait to see which pages are requested by the UI
                 OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             }
         }
@@ -440,6 +434,8 @@ namespace VirtualCollection.VirtualCollection
             {
                 return;
             }
+
+            _state++;
 
             foreach (var page in _fetchedPages)
             {
