@@ -238,7 +238,8 @@ namespace VirtualCollection.VirtualCollection
 
             // we need to ensure that there is one realized item prior to the first visible item, and one after the last visible item,
             // so that keyboard navigation works properly. For example, when focus is on the first visible item, and the user
-            // navigates up, the ListBox selects the previous item, and the scrolls that into view - and this triggers the loading of the rest of the items
+            // navigates up, the ListBox selects the previous item, and the scrolls that into view - and this triggers the loading of the rest of the items 
+            // in that row
 
             var firstVisibleLine = (int)Math.Floor(VerticalOffset / itemHeight);
 
