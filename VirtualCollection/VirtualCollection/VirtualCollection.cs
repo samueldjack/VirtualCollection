@@ -363,8 +363,9 @@ namespace VirtualCollection.VirtualCollection
             _fetchedPages.Add(page);
 
             var startIndex = page * _pageSize;
+            var count = Math.Min(results.Count, _pageSize);
 
-            for (int i = 0; i < results.Count; i++)
+            for (int i = 0; i < count; i++)
             {
                 var index = startIndex + i;
                 var virtualItem = _virtualItems[index] ?? (_virtualItems[index] = new VirtualItem<T>(this, index));
