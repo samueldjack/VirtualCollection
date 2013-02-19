@@ -10,13 +10,14 @@ namespace VirtualCollection.VirtualCollection
     {
         private readonly object lockObject = new object();
         public event EventHandler<VirtualCollectionSourceChangedEventArgs> CollectionChanged;
+        public event EventHandler<EventArgs> CountChanged;
         public event EventHandler<EventArgs> IsBusyChanged;
 
-        private int _count;
+        private int? _count;
         private bool _isBusy;
         private int _outstandingTasks;
 
-        public virtual int Count
+        public virtual int? Count
         {
             get
             {
@@ -31,7 +32,7 @@ namespace VirtualCollection.VirtualCollection
         {
             get
             {
-                lock(lockObject)
+                lock (lockObject)
                 {
                     return _isBusy;
                 }
@@ -53,18 +54,16 @@ namespace VirtualCollection.VirtualCollection
             }
         }
 
-        protected abstract Task<int> GetCount();
-
         public Task<IList<T>> GetPageAsync(int start, int pageSize, IList<SortDescription> sortDescriptions)
         {
             IncrementOutstandingTasks();
 
             return GetPageAsyncOverride(start, pageSize, sortDescriptions)
                 .ContinueWith(t =>
-                                  {
-                                      DecrementOutstandingTasks();
-                                      return t.Result;
-                                  }, TaskContinuationOptions.ExecuteSynchronously);
+                {
+                    DecrementOutstandingTasks();
+                    return t.Result;
+                }, TaskContinuationOptions.ExecuteSynchronously);
         }
 
         protected abstract Task<IList<T>> GetPageAsyncOverride(int start, int pageSize,
@@ -80,35 +79,17 @@ namespace VirtualCollection.VirtualCollection
             IsBusy = Interlocked.Decrement(ref _outstandingTasks) > 0;
         }
 
-        public virtual void Refresh(RefreshMode mode)
+        public void Refresh(RefreshMode mode)
         {
+            InvalidateCount();
             if (mode == RefreshMode.ClearStaleData)
             {
                 OnCollectionChanged(new VirtualCollectionSourceChangedEventArgs(ChangeType.Reset));
             }
-
-            BeginGetCount();
-        }
-
-        private void BeginGetCount()
-        {
-            IncrementOutstandingTasks();
-
-            GetCount()
-                .ContinueWith(t =>
-                {
-                    DecrementOutstandingTasks();
-
-                    if (!t.IsFaulted)
-                    {
-                        SetCount(t.Result, forceCollectionChangeNotification: true);
-                    }
-                    else
-                    {
-                        SetCount(0, forceCollectionChangeNotification: true);
-                    }
-                },
-                TaskContinuationOptions.ExecuteSynchronously);
+            else
+            {
+                OnCollectionChanged(new VirtualCollectionSourceChangedEventArgs(ChangeType.Refresh));
+            }
         }
 
         protected void OnCollectionChanged(VirtualCollectionSourceChangedEventArgs e)
@@ -123,7 +104,7 @@ namespace VirtualCollection.VirtualCollection
             if (handler != null) handler(this, e);
         }
 
-        protected void SetCount(int newCount, bool forceCollectionChangeNotification = false)
+        protected void SetCount(int newCount)
         {
             bool fileCountChanged;
 
@@ -133,10 +114,25 @@ namespace VirtualCollection.VirtualCollection
                 _count = newCount;
             }
 
-            if (fileCountChanged || forceCollectionChangeNotification)
+            if (fileCountChanged)
             {
-                OnCollectionChanged(new VirtualCollectionSourceChangedEventArgs(ChangeType.Refresh));
+                OnCountChanged(EventArgs.Empty);
             }
         }
+
+        protected void InvalidateCount()
+        {
+            lock (lockObject)
+            {
+                _count = null;
+            }
+        }
+
+        protected void OnCountChanged(EventArgs e)
+        {
+            EventHandler<EventArgs> handler = CountChanged;
+            if (handler != null) handler(this, e);
+        }
+
     }
 }

@@ -33,16 +33,15 @@ namespace VirtualCollection.Demo
             }
         }
 
-        protected override Task<int> GetCount()
-        {
-            return GetQueryResults(0, 1, null)
-                .ContinueWith(t => (int)t.Result.TotalCount, TaskContinuationOptions.ExecuteSynchronously);
-        }
-
         protected override Task<IList<Title>> GetPageAsyncOverride(int start, int pageSize, IList<SortDescription> sortDescriptions)
         {
             return GetQueryResults(start, pageSize, sortDescriptions)
-                .ContinueWith(t => (IList<Title>)((IEnumerable<Title>)t.Result).ToList(), TaskContinuationOptions.ExecuteSynchronously);
+                .ContinueWith(t =>
+                    {
+                        SetCount((int)t.Result.TotalCount);
+                        return (IList<Title>) ((IEnumerable<Title>) t.Result).ToList();
+
+                    }, TaskContinuationOptions.ExecuteSynchronously);
         }
 
         private Task<QueryOperationResponse<Title>> GetQueryResults(int start, int pageSize, IList<SortDescription> sortDescriptions)

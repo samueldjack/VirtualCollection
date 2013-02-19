@@ -16,9 +16,10 @@ namespace VirtualCollection.VirtualCollection
     /// <typeparam name="T"></typeparam>
     /// <remarks>The trick to ensuring that the silverlight datagrid doesn't attempt to enumerate all
     /// items from its DataSource in one shot is to implement both IList and ICollectionView.</remarks>
-    public class VirtualCollection<T> : IList<VirtualItem<T>>, IList, ICollectionView, INotifyPropertyChanged, IEnquireAboutItemVisibility where T : class
+    public class VirtualCollection<T> : IList<VirtualItem<T>>, IList, ICollectionView, INotifyPropertyChanged,
+                                        IEnquireAboutItemVisibility where T : class
     {
-        const int IndividualItemNotificationLimit = 100;
+        private const int IndividualItemNotificationLimit = 100;
         private const int MaxConcurrentPageRequests = 4;
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
@@ -32,7 +33,7 @@ namespace VirtualCollection.VirtualCollection
         private readonly int _pageSize;
         private readonly IEqualityComparer<T> _equalityComparer;
 
-        private volatile uint _state; // used to ensure that data-requests are not stale
+        private uint _state; // used to ensure that data-requests are not stale
 
         private readonly SparseList<VirtualItem<T>> _virtualItems;
         private readonly HashSet<int> _fetchedPages = new HashSet<int>();
@@ -55,19 +56,18 @@ namespace VirtualCollection.VirtualCollection
 
         }
 
-        public VirtualCollection(IVirtualCollectionSource<T> source, int pageSize, int cachedPages, IEqualityComparer<T> equalityComparer)
+        public VirtualCollection(IVirtualCollectionSource<T> source, int pageSize, int cachedPages,
+                                 IEqualityComparer<T> equalityComparer)
         {
             if (pageSize < 1)
-            {
                 throw new ArgumentException("pageSize must be bigger than 0");
-            }
+
             if (equalityComparer == null)
-            {
                 throw new ArgumentNullException("equalityComparer");
-            }
 
             _source = source;
             _source.CollectionChanged += HandleSourceCollectionChanged;
+            _source.CountChanged += HandleCountChanged;
             _pageSize = pageSize;
             _equalityComparer = equalityComparer;
             _virtualItems = CreateItemsCache(pageSize);
@@ -79,7 +79,12 @@ namespace VirtualCollection.VirtualCollection
             (_sortDescriptions as INotifyCollectionChanged).CollectionChanged += HandleSortDescriptionsChanged;
         }
 
-        public IVirtualCollectionSource<T> Source { get { return _source; } }
+
+
+        public IVirtualCollectionSource<T> Source
+        {
+            get { return _source; }
+        }
         public CultureInfo Culture { get; set; }
 
         public IEnumerable SourceCollection
@@ -176,6 +181,11 @@ namespace VirtualCollection.VirtualCollection
             get { return false; }
         }
 
+        protected uint State
+        {
+            get { return _state; }
+        }
+
         public void RealizeItemRequested(int index)
         {
             var page = index / _pageSize;
@@ -190,9 +200,7 @@ namespace VirtualCollection.VirtualCollection
         public void Refresh(RefreshMode mode)
         {
             if (!_isRefreshDeferred)
-            {
                 _source.Refresh(mode);
-            }
         }
 
         private void HandlePageEvicted(object sender, ItemEvictedEventArgs<int> e)
@@ -225,17 +233,22 @@ namespace VirtualCollection.VirtualCollection
             Refresh();
         }
 
+        private void HandleCountChanged(object sender, EventArgs e)
+        {
+            Task.Factory.StartNew(UpdateCount, CancellationToken.None, TaskCreationOptions.None,
+                                  _synchronizationContextScheduler);
+        }
+
         private void HandleSourceCollectionChanged(object sender, VirtualCollectionSourceChangedEventArgs e)
         {
-            var stateWhenUpdateRequested = _state;
             if (e.ChangeType == ChangeType.Refresh)
             {
-                Task.Factory.StartNew(() => UpdateData(stateWhenUpdateRequested), CancellationToken.None,
+                Task.Factory.StartNew(UpdateData, CancellationToken.None,
                                       TaskCreationOptions.None, _synchronizationContextScheduler);
             }
             else if (e.ChangeType == ChangeType.Reset)
             {
-                Task.Factory.StartNew(() => Reset(stateWhenUpdateRequested), CancellationToken.None,
+                Task.Factory.StartNew(Reset, CancellationToken.None,
                                       TaskCreationOptions.None, _synchronizationContextScheduler);
             }
         }
@@ -250,9 +263,7 @@ namespace VirtualCollection.VirtualCollection
                 for (int i = startIndex; i < endIndex; i++)
                 {
                     if (_virtualItems[i] != null)
-                    {
                         _virtualItems[i].IsStale = true;
-                    }
                 }
             }
         }
@@ -260,14 +271,12 @@ namespace VirtualCollection.VirtualCollection
         private void BeginGetPage(int page)
         {
             if (IsPageAlreadyRequested(page))
-            {
                 return;
-            }
 
             _mostRecentlyRequestedPages.Add(page);
             _requestedPages.Add(page);
 
-            _pendingPageRequests.Push(new PageRequest(page, _state));
+            _pendingPageRequests.Push(new PageRequest(page, State));
 
             ProcessPageRequests();
         }
@@ -280,7 +289,7 @@ namespace VirtualCollection.VirtualCollection
 
                 // if we encounter a requested posted for an early collection state,
                 // we can ignore it, and all that came before it
-                if (_state != request.StateWhenRequested)
+                if (State != request.StateWhenRequested)
                 {
                     _pendingPageRequests.Clear();
                     break;
@@ -289,9 +298,7 @@ namespace VirtualCollection.VirtualCollection
                 // check that the page is still requested (the user might have scrolled, causing the 
                 // page to be ejected from the cache
                 if (!_requestedPages.Contains(request.Page))
-                {
                     break;
-                }
 
                 _inProcessPageRequests++;
 
@@ -299,13 +306,9 @@ namespace VirtualCollection.VirtualCollection
                     t =>
                     {
                         if (!t.IsFaulted)
-                        {
                             UpdatePage(request.Page, t.Result, request.StateWhenRequested);
-                        }
                         else
-                        {
                             MarkPageAsError(request.Page, request.StateWhenRequested);
-                        }
 
                         // fire off any further requests
                         _inProcessPageRequests--;
@@ -317,16 +320,12 @@ namespace VirtualCollection.VirtualCollection
 
         private void MarkPageAsError(int page, uint stateWhenRequestInitiated)
         {
-            if (stateWhenRequestInitiated != _state)
-            {
+            if (stateWhenRequestInitiated != State)
                 return;
-            }
 
-            bool stillRelevant = _requestedPages.Remove(page);
+            var stillRelevant = _requestedPages.Remove(page);
             if (!stillRelevant)
-            {
                 return;
-            }
 
             var startIndex = page * _pageSize;
 
@@ -335,9 +334,7 @@ namespace VirtualCollection.VirtualCollection
                 var index = startIndex + i;
                 var virtualItem = _virtualItems[index];
                 if (virtualItem != null)
-                {
                     virtualItem.ErrorFetchingValue();
-                }
             }
         }
 
@@ -348,7 +345,7 @@ namespace VirtualCollection.VirtualCollection
 
         private void UpdatePage(int page, IList<T> results, uint stateWhenRequested)
         {
-            if (stateWhenRequested != _state)
+            if (stateWhenRequested != State)
             {
                 // this request may contain out-of-date data, so ignore it
                 return;
@@ -356,13 +353,13 @@ namespace VirtualCollection.VirtualCollection
 
             bool stillRelevant = _requestedPages.Remove(page);
             if (!stillRelevant)
-            {
                 return;
-            }
 
             _fetchedPages.Add(page);
 
             var startIndex = page * _pageSize;
+
+            // guard against rogue collection sources returning too many results
             var count = Math.Min(results.Count, _pageSize);
 
             for (int i = 0; i < count; i++)
@@ -370,25 +367,16 @@ namespace VirtualCollection.VirtualCollection
                 var index = startIndex + i;
                 var virtualItem = _virtualItems[index] ?? (_virtualItems[index] = new VirtualItem<T>(this, index));
                 if (virtualItem.Item == null || results[i] == null || !_equalityComparer.Equals(virtualItem.Item, results[i]))
-                {
                     virtualItem.SupplyValue(results[i]);
-                }
             }
 
-            if (results.Count > 0)
-            {
-                OnItemsRealized(new ItemsRealizedEventArgs(startIndex, results.Count));
-            }
+            if (count > 0)
+                OnItemsRealized(new ItemsRealizedEventArgs(startIndex, count));
         }
 
-        protected void UpdateData(uint stateWhenUpdateRequested)
+        protected void UpdateData()
         {
-            if (_state != stateWhenUpdateRequested)
-            {
-                return;
-            }
-
-            _state++;
+            IncrementState();
 
             MarkExistingItemsAsStale();
 
@@ -421,22 +409,20 @@ namespace VirtualCollection.VirtualCollection
             }
         }
 
+        private void IncrementState()
+        {
+            _state++;
+        }
+
         private void EnsurePageCacheSize(int numberOfPages)
         {
             if (_mostRecentlyRequestedPages.Size < numberOfPages)
-            {
                 _mostRecentlyRequestedPages.Size = numberOfPages;
-            }
         }
 
-        private void Reset(uint stateWhenRequested)
+        private void Reset()
         {
-            if (_state != stateWhenRequested)
-            {
-                return;
-            }
-
-            _state++;
+            IncrementState();
 
             foreach (var page in _fetchedPages)
             {
@@ -446,25 +432,35 @@ namespace VirtualCollection.VirtualCollection
                 for (int i = startIndex; i < endIndex; i++)
                 {
                     if (_virtualItems[i] != null)
-                    {
                         _virtualItems[i].ClearValue();
-                    }
                 }
             }
+
+            _fetchedPages.Clear();
+            _requestedPages.Clear();
+
             UpdateCount(0);
+            UpdateCount();
         }
 
         private void UpdateCount()
         {
-            UpdateCount(_source.Count);
+            if (_source.Count.HasValue)
+            {
+                UpdateCount(_source.Count.Value);
+            }
+            else
+            {
+                // if the Count is null, that indicates that
+                // the VirtualCollectionSource needs us to fetch a page before it will know how many elements there are
+                BeginGetPage(0);
+            }
         }
 
         private void UpdateCount(int count)
         {
             if (_itemCount == count)
-            {
                 return;
-            }
 
             var wasCurrentBeyondLast = IsCurrentAfterLast;
 
@@ -473,16 +469,12 @@ namespace VirtualCollection.VirtualCollection
             _itemCount = count;
 
             if (IsCurrentAfterLast && !wasCurrentBeyondLast)
-            {
                 UpdateCurrentPosition(_itemCount - 1, allowCancel: false);
-            }
 
             OnPropertyChanged(new PropertyChangedEventArgs("Count"));
 
             if (Math.Abs(delta) > IndividualItemNotificationLimit || _itemCount == 0)
-            {
                 OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-            }
             else if (delta > 0)
             {
                 for (int i = 0; i < delta; i++)
@@ -509,14 +501,7 @@ namespace VirtualCollection.VirtualCollection
 
         public bool Contains(object item)
         {
-            if (item is VirtualItem<T>)
-            {
-                return Contains(item as VirtualItem<T>);
-            }
-            else
-            {
-                return false;
-            }
+            return item is VirtualItem<T> && Contains(item as VirtualItem<T>);
         }
 
         object IList.this[int index]
@@ -529,6 +514,11 @@ namespace VirtualCollection.VirtualCollection
         {
             get
             {
+                if (index >= Count)
+                {
+                    throw new ArgumentOutOfRangeException("index");
+                }
+
                 RealizeItemRequested(index);
                 return _virtualItems[index] ?? (_virtualItems[index] = new VirtualItem<T>(this, index));
             }
@@ -539,7 +529,11 @@ namespace VirtualCollection.VirtualCollection
         {
             _isRefreshDeferred = true;
 
-            return new Disposer(() => { _isRefreshDeferred = false; Refresh(); });
+            return new Disposer(() =>
+            {
+                _isRefreshDeferred = false;
+                Refresh();
+            });
         }
 
         public bool MoveCurrentToFirst()
@@ -588,44 +582,44 @@ namespace VirtualCollection.VirtualCollection
 
         protected void OnCurrentChanging(CurrentChangingEventArgs e)
         {
-            CurrentChangingEventHandler handler = CurrentChanging;
+            var handler = CurrentChanging;
             if (handler != null) handler(this, e);
         }
 
 
         protected void OnCurrentChanged(EventArgs e)
         {
-            EventHandler handler = CurrentChanged;
+            var handler = CurrentChanged;
             if (handler != null) handler(this, e);
         }
 
         protected void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
-            NotifyCollectionChangedEventHandler handler = CollectionChanged;
+            var handler = CollectionChanged;
             if (handler != null) handler(this, e);
         }
 
         protected void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            PropertyChangedEventHandler handler = PropertyChanged;
+            var handler = PropertyChanged;
             if (handler != null) handler(this, e);
         }
 
         protected void OnItemsRealized(ItemsRealizedEventArgs e)
         {
-            EventHandler<ItemsRealizedEventArgs> handler = ItemsRealized;
+            var handler = ItemsRealized;
             if (handler != null) handler(this, e);
         }
 
         protected void OnQueryItemVisibility(QueryItemVisibilityEventArgs e)
         {
-            EventHandler<QueryItemVisibilityEventArgs> handler = QueryItemVisibility;
+            var handler = QueryItemVisibility;
             if (handler != null) handler(this, e);
         }
 
         public IEnumerator<VirtualItem<T>> GetEnumerator()
         {
-            for (int i = 0; i < _itemCount; i++)
+            for (var i = 0; i < _itemCount; i++)
             {
                 yield return this[i];
             }
@@ -663,14 +657,7 @@ namespace VirtualCollection.VirtualCollection
 
         bool IList.Contains(object value)
         {
-            if (value is VirtualItem<T>)
-            {
-                return Contains(value as VirtualItem<T>);
-            }
-            else
-            {
-                return false;
-            }
+            return value is VirtualItem<T> && Contains(value as VirtualItem<T>);
         }
 
         public void Clear()
@@ -681,14 +668,7 @@ namespace VirtualCollection.VirtualCollection
         int IList.IndexOf(object value)
         {
             var virtualItem = value as VirtualItem<T>;
-            if (virtualItem == null)
-            {
-                return -1;
-            }
-            else
-            {
-                return virtualItem.Index;
-            }
+            return virtualItem == null ? -1 : virtualItem.Index;
         }
 
         void IList.Insert(int index, object value)

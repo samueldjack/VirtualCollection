@@ -1,16 +1,16 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualCollection", "VirtualCollection\VirtualCollection.csproj", "{19D96D76-77F4-456C-A04B-44F5FF9172E3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualCollection.Web", "VirtualCollection.Web\VirtualCollection.Web.csproj", "{E8E63401-D8B0-42C5-8D15-9D68CE8641BB}"
-EndProject
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{60BC5A25-0D86-4E1C-A9AD-39655475B12B}"
 	ProjectSection(SolutionItems) = preProject
 		.nuget\NuGet.Config = .nuget\NuGet.Config
 		.nuget\nuget.exe = .nuget\nuget.exe
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualCollection", "VirtualCollection\VirtualCollection.csproj", "{19D96D76-77F4-456C-A04B-44F5FF9172E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualCollection.Web", "VirtualCollection.Web\VirtualCollection.Web.csproj", "{E8E63401-D8B0-42C5-8D15-9D68CE8641BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

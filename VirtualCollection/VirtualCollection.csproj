@@ -62,23 +62,38 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Data.Edm.SL">
+      <HintPath>..\packages\Microsoft.Data.Edm.5.3.0\lib\sl4\Microsoft.Data.Edm.SL.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Data.OData.SL">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Microsoft WCF Data Services\5.0\bin\Silverlight\Microsoft.Data.OData.SL.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Data.OData.5.3.0\lib\sl4\Microsoft.Data.OData.SL.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Data.Services.Client.SL">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Microsoft WCF Data Services\5.0\bin\Silverlight\Microsoft.Data.Services.Client.SL.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Data.Services.Client.5.3.0\lib\sl4\Microsoft.Data.Services.Client.SL.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Expression.Interactions">
+      <HintPath>..\packages\Blend.Interactivity.Silverlight.2.0.20520.0\lib\sl\Microsoft.Expression.Interactions.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
-    <Reference Include="System.Reactive">
-      <HintPath>..\packages\Rx-Main.1.0.11226\lib\SL5\System.Reactive.dll</HintPath>
+    <Reference Include="System.Reactive.Core">
+      <HintPath>..\packages\Rx-Core.2.1.30214.0\lib\SL5\System.Reactive.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reactive.Interfaces">
+      <HintPath>..\packages\Rx-Interfaces.2.1.30214.0\lib\SL5\System.Reactive.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reactive.Linq">
+      <HintPath>..\packages\Rx-Linq.2.1.30214.0\lib\SL5\System.Reactive.Linq.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Reactive.PlatformServices">
+      <HintPath>..\packages\Rx-PlatformServices.2.1.30214.0\lib\SL5\System.Reactive.PlatformServices.dll</HintPath>
     </Reference>
     <Reference Include="System.Reactive.Windows.Threading">
-      <HintPath>..\packages\Rx-Silverlight.1.0.11226\lib\SL5\System.Reactive.Windows.Threading.dll</HintPath>
+      <HintPath>..\packages\Rx-Xaml.2.1.30214.0\lib\SL5\System.Reactive.Windows.Threading.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Spatial.SL">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Microsoft WCF Data Services\5.0\bin\Silverlight\System.Spatial.SL.dll</HintPath>
+      <HintPath>..\packages\System.Spatial.5.3.0\lib\sl4\System.Spatial.SL.dll</HintPath>
     </Reference>
     <Reference Include="System.Windows" />
     <Reference Include="system" />
@@ -86,8 +101,12 @@
     <Reference Include="System.Net" />
     <Reference Include="System.Windows.Controls, Version=5.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Windows.Controls.Data, Version=5.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
-    <Reference Include="System.Windows.Controls.Toolkit, Version=5.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
-    <Reference Include="System.Windows.Interactivity, Version=5.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Windows.Controls.Toolkit">
+      <HintPath>..\packages\SilverlightToolkit-Core.4.2010.4\lib\sl4\System.Windows.Controls.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Interactivity">
+      <HintPath>..\packages\Blend.Interactivity.Silverlight.2.0.20520.0\lib\sl\System.Windows.Interactivity.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Windows.Browser" />
     <Reference Include="System.Xml.Linq, Version=5.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
