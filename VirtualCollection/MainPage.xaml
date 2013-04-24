@@ -22,8 +22,10 @@
                     <DataTemplate>
                         <Border BorderBrush="RosyBrown" BorderThickness="1" Margin="20" Height="180" Width="120" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <Grid>
-                                <TextBlock Foreground="Gray" Text="{Binding Item.Name}" TextWrapping="Wrap" Margin="5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                <Image Stretch="None" Source="{Binding Item.BoxArt.LargeUrl, Converter={StaticResource Converter_StringToImage}}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Foreground="Gray" Text="{Binding Item.ProductName}" TextWrapping="Wrap" Margin="5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                    <TextBlock Foreground="Gray" Text="{Binding Item.UnitPrice}" TextWrapping="Wrap" Margin="5" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -60,16 +62,9 @@
                     <VirtualCollection1:ProvideVisibleItemRangeFromDataGridBehavior/>
                 </i:Interaction.Behaviors>
                 <sdk:DataGrid.Columns>
-                    <sdk:DataGridTemplateColumn Header="Image">
-                        <sdk:DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Image Stretch="None" Source="{Binding Item.BoxArt.SmallUrl, Converter={StaticResource Converter_StringToImage}}" Margin="5" />
-                            </DataTemplate>
-                        </sdk:DataGridTemplateColumn.CellTemplate>
-                    </sdk:DataGridTemplateColumn>
-                    <sdk:DataGridTextColumn Binding="{Binding Item.Name}" Header="Name" CanUserSort="True" SortMemberPath="Name"/>
-                    <sdk:DataGridTextColumn Binding="{Binding Item.AverageRating}" Header="Average Rating" CanUserSort="True" SortMemberPath="AverageRating"/>
-                    <sdk:DataGridTextColumn Binding="{Binding Item.ReleaseYear}" Header="Release Year" CanUserSort="True" SortMemberPath="ReleaseYear"/>
+                    <sdk:DataGridTextColumn Binding="{Binding Item.ProductName}" Header="Name" CanUserSort="True" SortMemberPath="ProductName"/>
+                    <sdk:DataGridTextColumn Binding="{Binding Item.UnitPrice}" Header="Price" CanUserSort="True" SortMemberPath="UnitPrice"/>
+                    <sdk:DataGridTextColumn Binding="{Binding Item.QuantityPerUnit}" Header="Quantity Per Unit" CanUserSort="True" SortMemberPath="QuantityPerUnit"/>
                 </sdk:DataGrid.Columns>
             </sdk:DataGrid>
         </DataTemplate>

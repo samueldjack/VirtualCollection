@@ -13,7 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using VirtualCollection.Framework.MVVM;
-using VirtualCollection.Netflix;
+using VirtualCollection.Northwind;
 using VirtualCollection.VirtualCollection;
 using VirtualCollection.Framework.Extensions;
 using System.Reactive.Linq;
@@ -23,7 +23,7 @@ namespace VirtualCollection.Demo
     public class MainViewModel : ViewModel
     {
         private string _search;
-        private NetflixTitlesSource _source;
+        private NorthwindProductsSource _source;
         private string _displayStyle;
 
         public string Search
@@ -48,12 +48,12 @@ namespace VirtualCollection.Demo
 
         public IList<string> DisplayStyles { get { return new[] {"Card", "Details"}; } }
  
-        public VirtualCollection<Title> Items { get; private set; }
+        public VirtualCollection<Product> Items { get; private set; }
 
         public MainViewModel()
         {
-            _source = new NetflixTitlesSource();
-            Items = new VirtualCollection<Title>(_source, pageSize: 20, cachedPages: 5);
+            _source = new NorthwindProductsSource();
+            Items = new VirtualCollection<Product>(_source, pageSize: 20, cachedPages: 5);
 
             this.ObservePropertyChanged(() => Search)
                 .Throttle(TimeSpan.FromSeconds(0.25))
